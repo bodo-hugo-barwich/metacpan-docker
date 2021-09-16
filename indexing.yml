@@ -1,0 +1,65 @@
+# This is a basic workflow to help you get started with Actions
+
+name: Build ElasticSearch Index
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on push or pull request events but only for the master branch
+#  pull_request:
+#    branches: [ master ]
+#  workflow_dispatch:
+ #    branches:    
+ #     - master  
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build-index:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-20.04
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:        
+      # Start Docker Engine
+#          sudo systemctl start docker
+      - name: Start Docker Engine
+        run: |
+          sudo systemctl status docker -l
+          
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+
+      - name: Listing Directory Contents
+        run: |
+          echo 'User:' $(whoami) 
+          echo 'Working Directory:' $(pwd) 
+          echo 'Directory Content:' 
+          ls -lah
+        
+      # Build Container Images
+#          sudo chmod a+w cache log perl5
+      - name: Build Container Images with 'docker-compose'
+        run: |
+          mkdir -p cpan ; chmod a+w cpan -R
+          docker-compose up -d --build api
+          
+      # Check Container Health Exit the test when Containers are failed
+      - name: Check Container Health
+        run: |
+          constat=`docker-compose ps 2>&1` 
+          echo -e "Container Status Complete:\n$constat" 
+          constat=`echo "$constat" | sed -re 's/[[:space:]][[:space:]]+/|/g' | cut -d"|" -f1,3  | grep "|"`
+          echo -e "Container Status Up:\n$constat"
+          echo "Component 'api' Logs:"
+          docker-compose logs api
+          confailed=`echo "$constat" | grep -i "exit" | wc -l`
+          if [ $confailed -ne 0 ]; then exit 1 ; fi
+          
+      # Test the Component Integration
+      - name: Run the Elastic Search Indexation
+        run: |
+          echo "Indexation: starting ..."
+          docker-compose exec api index-cpan.sh -y
