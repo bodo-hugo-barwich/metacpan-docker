@@ -49,7 +49,7 @@ jobs:
           mkdir -p src ; cd src
           git clone https://github.com/bodo-hugo-barwich/metacpan-api.git metacpan-api 
           cd metacpan-api
-          git fetch && git checkout no-47_wrong-index && git pull && git log -1
+          git fetch && git checkout no-47_wrong-index && git pull && git log -1 | sed -re 's/@/ at /' | tr -s '<>'
           cd ../../
 
       # Build Container Images
