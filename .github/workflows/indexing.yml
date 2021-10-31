@@ -97,13 +97,13 @@ jobs:
       # Test the Elastic Search Indexation
       - name: Run the Elastic Search Indexation
         run: |
+          echo "Indexation: starting ..."
+          docker-compose exec -T api index-cpan.sh
           elasticsearchport=`docker-compose ps 2>&1 | grep -i elasticsearch | grep -ioE ":[0-9]+\->" | grep -ioE "[0-9]+" | sed -n 1p`
           export ES_PORT=$elasticsearchport
           echo "ElasticSearch Port: '$ES_PORT'" 
           echo "ElasticSearch Version:" 
           curl -v "localhost:$ES_PORT" 2>&1
-          echo "Indexation: starting ..."
-          docker-compose exec -T api index-cpan.sh
           echo "Indexation: Indices showing ..."
           docker-compose exec -T api curl -v 'elasticsearch:9200/_cat/indices'
           echo "Indexation: Activity Log showing ..."
