@@ -97,8 +97,6 @@ jobs:
       # Test the Elastic Search Indexation
       - name: Run the Elastic Search Indexation
         run: |
-          echo "Component 'api' Availability:"
-          curl -v "localhost:5000" 2>&1
           elasticsearchport=`docker-compose ps 2>&1 | grep -i elasticsearch | grep -ioE ":[0-9]+\->" | grep -ioE "[0-9]+" | sed -n 1p`
           export ES_PORT=$elasticsearchport
           echo "ElasticSearch Port: '$ES_PORT'" 
