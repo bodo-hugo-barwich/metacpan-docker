@@ -5,7 +5,7 @@ MODULE=`basename $0`
 NOW=$(date +"%F %T")
 echo "${NOW} I ${MODULE}: Indices re-creating ..."
 
-sdeletelog=`./bin/run bin/metacpan mapping --delete --yes 2>&1`
+sdeletelog=`./bin/run bin/metacpan mapping --delete --yes $@ 2>&1`
 ideleters=$?
 
 NOW=$(date +"%F %T")
@@ -13,15 +13,26 @@ echo "${NOW} I ${MODULE}: Re-creation finished with [$ideleters]"
 echo "${NOW} I ${MODULE}: Re-creation Log:\n'$sdeletelog'"
 
 if [ $ideleters -ne 0 ]; then
-	  echo "${NOW} I ${MODULE}: Re-creation failed!"
+	  echo "${NOW} E ${MODULE}: Re-creation failed!"
 
   	exit $ideleters
 fi
 
 NOW=$(date +"%F %T")
-echo "${NOW} I ${MODULE}: ElasticSearch 'elasticsearch:9200': Indices showing ..."
+echo "${NOW} I ${MODULE}: ElasticSearch - Info collecting ..."
 
-curl -v 'elasticsearch:9200/_cat/indices'
+sinfolog=`./bin/run bin/metacpan mapping --show_cluster_info $@ 2>&1`
+iinfors=$?
+
+NOW=$(date +"%F %T")
+echo "${NOW} I ${MODULE}: Info finished with [$iinfors]"
+echo "${NOW} I ${MODULE}: Info Log:\n'$sinfolog'"
+
+if [ $iinfors -ne 0 ]; then
+	  echo "${NOW} E ${MODULE}: ElasticSearch unavailable!"
+
+  	exit $iinfors
+fi
 
 NOW=$(date +"%F %T")
 echo "${NOW} I ${MODULE}: Packages downloading ..."
