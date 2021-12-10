@@ -72,8 +72,8 @@ services:
         source: web_carton
         target: /carton
       - type: bind
-        source: ./configs/metacpan-web/metacpan_web.conf
-        target: /metacpan-web/metacpan_web.conf
+        source: ./configs/metacpan-web/metacpan_web_local.conf
+        target: /metacpan-web/metacpan_web_local.conf
         read_only: true
       - type: bind
         source: ./src/metacpan-web
@@ -366,6 +366,8 @@ services:
         PG_TAG: "${PG_VERSION_TAG:-9.6-alpine}"
     environment:
       POSTGRES_PASSWORD: metacpan
+      POSTGRES_USERNAME: metacpan123
+      POSTGRES_DB: metacpan
     networks:
       - database
     healthcheck:
@@ -396,7 +398,7 @@ services:
   #
 
   mongodb:
-    image: mongo:latest
+    image: mongo:4.4.9
     networks:
       - mongo
     healthcheck:
