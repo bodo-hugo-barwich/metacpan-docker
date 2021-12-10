@@ -5,7 +5,7 @@ MODULE=`basename $0`
 NOW=$(date +"%F %T")
 echo "${NOW} I ${MODULE}: Indices re-creating ..."
 
-sdeletelog=`./bin/run bin/metacpan mapping --delete --yes $@ 2>&1`
+sdeletelog=`./bin/run bin/metacpan mapping --delete $@ 2>&1`
 ideleters=$?
 
 NOW=$(date +"%F %T")
