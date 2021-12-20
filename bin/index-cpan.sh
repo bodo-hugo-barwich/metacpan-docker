@@ -5,12 +5,13 @@ MODULE=`basename $0`
 NOW=$(date +"%F %T")
 echo "${NOW} I ${MODULE}: Indices re-creating ..."
 
-sdeletelog=`./bin/run bin/metacpan mapping --delete $@ 2>&1`
+#sdeletelog=`echo "" 2>&1`
+./bin/run bin/metacpan mapping --delete $@
 ideleters=$?
 
 NOW=$(date +"%F %T")
 echo "${NOW} I ${MODULE}: Re-creation finished with [$ideleters]"
-echo "${NOW} I ${MODULE}: Re-creation Log:\n'$sdeletelog'"
+#echo "${NOW} I ${MODULE}: Re-creation Log:\n'$sdeletelog'"
 
 if [ $ideleters -ne 0 ]; then
 	  echo "${NOW} E ${MODULE}: Re-creation failed!"
