@@ -1,8 +1,5 @@
-# This is a basic workflow to help you get started with Actions
-
 name: Test MetaCPAN API Operativity
 
-# Controls when the workflow will run
 on:
   # Triggers the workflow on push or pull request events but only for the master branch
   pull_request:
@@ -79,32 +76,10 @@ jobs:
           echo -e "Container Status Complete:\n$constat" 
           constat=`echo "$constat" | sed -re 's/^[[:space:]]+//g' -e 's/[[:space:]][[:space:]]+/|/g' | cut -d"|" -f1,3 | grep "|"`
           echo -e "Container Status Up:\n$constat"
-          echo "Component 'api' Logs:"
-          docker-compose logs api
-          confailed=`echo "$constat" | grep -i "exit" | wc -l`
-          if [ $confailed -ne 0 ]; then exit 1 ; fi
+          complogs=`docker-compose logs api 2>&1`
+          echo -e "Component 'api' Logs:\n$complogs"
+          echo -e "Component 'api' finished with:\n" $(echo "$complogs" | tail -1)
           echo "Component 'elasticsearch' Logs:"
           docker-compose logs elasticsearch
-          
-      # Test the Elastic Search Indexation
-      - name: Wait for the MetaCPAN API to become available
-        run: |
-          echo "MetaCPAN API: awaiting ..."
-          docker-compose exec -T api index-cpan.sh
-          elasticsearchport=`docker-compose ps 2>&1 | grep -i elasticsearch | grep -ioE ":[0-9]+\->" | grep -ioE "[0-9]+" | sed -n 1p`
-          export ES_PORT=$elasticsearchport
-          echo "ElasticSearch Port: '$ES_PORT'" 
-          echo "ElasticSearch Version:" 
-          curl -v "localhost:$ES_PORT" 2>&1
-          echo "Indexation: Indices showing ..."
-          docker-compose exec -T api curl -v 'elasticsearch:9200/_cat/indices'
-          echo "Indexation: Activity Log showing ..."
-          cat src/metacpan-api/var/log/metacpan.log
-          doccount=`curl "localhost:$ES_PORT/_cat/indices" 2>&1 | grep -i "cpan_v1_01" | awk '{print $6}'`
-          alias=`curl "localhost:$ES_PORT/_cat/aliases" 2>&1 | grep -i "cpan_v1_01" | cut -d" " -f1,2`
-          if [ -z "$doccount"]; then doccount=0 ; fi
-          if [ -z "$alias" ]; then alias="none" ; fi
-          echo "Indexation: Document Count '$doccount'"
-          echo "Indexation: Alias '$alias'"
-          if [ $doccount -eq 0 ]; then exit 1 ; fi
-          if [ "$alias" != "cpan cpan_v1_01" ]; then exit 1 ; fi
+          confailed=`echo "$constat" | grep -i "exit" | wc -l`          
+          if [ $confailed -ne 0 ]; then exit 1 ; fi
