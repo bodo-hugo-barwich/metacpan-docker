@@ -69,9 +69,11 @@ jobs:
           docker-compose up -d api
           
       # Check Container Health 
+      # Add some Pause for ElasticSearch to become available
       # End the test when Containers are failed
       - name: Check Container Health
         run: |
+          sleep 10
           constat=`docker-compose ps 2>&1` 
           echo -e "Container Status Complete:\n$constat" 
           constat=`echo "$constat" | sed -re 's/^[[:space:]]+//g' -e 's/[[:space:]][[:space:]]+/|/g' | cut -d"|" -f1,3 | grep "|"`
