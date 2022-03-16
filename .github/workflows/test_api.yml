@@ -43,7 +43,8 @@ jobs:
       - name: Build Container Images with 'docker-compose'
         run: |
           mkdir -p cpan src ; chmod a+w cpan -R ; cd src
-          git clone https://github.com/metacpan/metacpan-api.git metacpan-api 
+          #git clone https://github.com/metacpan/metacpan-api.git metacpan-api 
+          git clone https://github.com/bodo-hugo-barwich/metacpan-api.git metacpan-api 
           git clone https://github.com/metacpan/metacpan-web.git metacpan-web
           git clone https://github.com/metacpan/metacpan-grep-front-end.git metacpan-grep-front-end
           git clone https://github.com/metacpan/metacpan-cpan-extracted-lite.git metacpan-cpan-extracted-lite
