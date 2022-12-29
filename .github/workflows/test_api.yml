@@ -83,5 +83,5 @@ jobs:
           confailed=`echo "$constat" | grep -i "exit" | wc -l`          
           complogs=`docker-compose logs pgdb 2>&1`
           echo -e "Component 'pgdb' Logs:\n$complogs"
-          echo -e "Component 'pgdb' finished with:\n" $(echo "$complogs" | tail -7)
+          echo -e "Component 'pgdb' finished with:\n" $(echo -e "$complogs" | tail -7)
           if [ $confailed -ne 0 ]; then exit 1 ; fi
