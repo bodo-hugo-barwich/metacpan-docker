@@ -1,0 +1,87 @@
+name: Test MetaCPAN API Operativity
+
+on:
+  # Triggers the workflow on push or pull request events but only for the master branch
+  pull_request:
+    branches: [ master ]
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+#  workflow_dispatch:
+ #    branches:    
+ #     - master  
+
+jobs:
+  component-availability:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-20.04
+    
+#    env:
+      # Environment Variables for the Indexation Script
+#      ES_TEST: "elasticsearch:9200"
+#      HARNESS_ACTIVE: 0
+#      TEST_VERBOSE: 0
+
+    steps:        
+      # Check Docker Engine
+      - name: Check Docker Engine
+        run: |
+          sudo systemctl status docker -l
+          
+      - uses: actions/checkout@v2
+
+      - name: Listing Directory Contents
+        run: |
+          echo 'User:' $(whoami) 
+          echo 'Working Directory:' $(pwd) 
+          echo 'Directory Content:' 
+          ls -lah
+ 
+      # Build Container Images
+      - name: Build Container Images with 'docker-compose'
+        run: |
+          mkdir -p cpan src ; chmod a+w cpan -R ; cd src
+          # git clone https://github.com/bodo-hugo-barwich/metacpan-api.git metacpan-api 
+          git clone https://github.com/metacpan/metacpan-api.git metacpan-api 
+          git clone https://github.com/metacpan/metacpan-web.git metacpan-web
+          git clone https://github.com/metacpan/metacpan-grep-front-end.git metacpan-grep-front-end
+          git clone https://github.com/metacpan/metacpan-cpan-extracted-lite.git metacpan-cpan-extracted-lite
+          ln -s metacpan-cpan-extracted-lite metacpan-cpan-extracted
+          cd ../
+          docker volume create --driver local --opt device=:$(pwd)/src/metacpan-cpan-extracted --opt o=bind --opt type=none metacpan_git_shared
+          echo "Docker: Volumes listing ..."
+          docker volume ls
+          docker volume inspect metacpan_git_shared
+          echo "Docker: Images building ..."
+          docker-compose up --build --no-start traefik
+          docker-compose up --build --no-start elasticsearch
+          docker-compose up --build --no-start pgdb
+          docker-compose up --build --no-start api
+          echo "Docker: Images listing ..."
+          docker image ls
+          docker image inspect metacpan/metacpan-api
+          echo "Docker: Volumes listing ..."
+          docker volume ls
+          docker volume inspect metacpan_elasticsearch
+          echo "Docker: Service 'api' starting ..."
+          docker-compose up -d api
+          
+      # Check Container Health 
+      # Add some Pause for ElasticSearch to become available
+      # End the test when Containers are failed
+      - name: Check Container Health
+        run: |
+          sleep 10
+          constat=`docker-compose ps 2>&1` 
+          echo -e "Container Status Complete:\n$constat" 
+          constat=`echo "$constat" | sed -re 's/^[[:space:]]+//g' -e 's/[[:space:]][[:space:]]+/|/g' | cut -d"|" -f1,3 | grep "|"`
+          echo -e "Container Status Up:\n$constat"
+          complogs=`docker-compose logs api 2>&1`
+          echo -e "Component 'api' Logs:\n$complogs"
+          echo -e "Component 'api' finished with:\n" $(echo "$complogs" | tail -1)
+          echo "Component 'elasticsearch' Logs:"
+          docker-compose logs elasticsearch
+          confailed=`echo "$constat" | grep -i "exit" | wc -l`          
+          complogs=`docker-compose logs pgdb 2>&1`
+          echo -e "Component 'pgdb' Logs:\n$complogs"
+          echo -e "Component 'pgdb' finished with:\n" $(echo -e "$complogs" | tail -7)
+          if [ $confailed -ne 0 ]; then exit 1 ; fi
